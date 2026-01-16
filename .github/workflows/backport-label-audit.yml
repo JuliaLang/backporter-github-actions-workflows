@@ -11,12 +11,12 @@ on:
         required: false
         type: string
       dry_run:
+        # In the repo itself (JuliaLang/julia or the stdlib repo), this is a `choice`.
+        # But `choice` doesn't seem to be supported in reusable workflows, so we use `string` here.
+        # And then we manually validate the value of `dry_run` later on.
         description: 'Dry run (only report, do not modify)'
         required: true
-        type: choice
-        options:
-          - 'true'
-          - 'false'
+        type: string
         default: 'true'
 
 # on:
@@ -78,8 +78,13 @@ jobs:
           if [ -n "$INPUTS_VERSION" ]; then
             ARGS="${ARGS:?} -v ${INPUTS_VERSION:?}"
           fi
-          if [ "${INPUTS_DRY_RUN:?}" = "true" ]; then
+          if [ "$INPUTS_DRY_RUN" = "true" ]; then
             ARGS="${ARGS:?} --dry-run"
+          elif [ "$INPUTS_DRY_RUN" = "true" ]; then
+          else
+            # We have to do this manual validation here, because reusable workflows don't support `type: choice` for inputs.
+            echo "FATAL ERROR: Invalid value for the dry_run input: $INPUTS_DRY_RUN"
+            exit 1
           fi
           echo "ARGS is: ${ARGS:?}"
           julia --project backporter.jl ${ARGS:?}
