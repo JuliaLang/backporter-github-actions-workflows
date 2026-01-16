@@ -4,7 +4,7 @@ name: Backport Label Audit
 # Optionally specify a release version to limit the audit to that version
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       version:
         description: 'Release version to audit (e.g., 1.13). Leave empty to audit all versions.'
@@ -18,6 +18,22 @@ on:
           - 'true'
           - 'false'
         default: 'true'
+
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       version:
+#         description: 'Release version to audit (e.g., 1.13). Leave empty to audit all versions.'
+#         required: false
+#         type: string
+#       dry_run:
+#         description: 'Dry run (only report, do not modify)'
+#         required: true
+#         type: choice
+#         options:
+#           - 'true'
+#           - 'false'
+#         default: 'true'
 
 jobs:
   audit-backport-labels:
