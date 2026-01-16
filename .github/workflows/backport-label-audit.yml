@@ -11,7 +11,7 @@ on:
         required: false
         type: string
       dry_run:
-        # In the repo itself (JuliaLang/julia or the stdlib repo), this is a `choice`.
+        # In the caller repo (JuliaLang/julia or the stdlib repo), this is a `choice`.
         # But `choice` doesn't seem to be supported in reusable workflows, so we use `string` here.
         # And then we manually validate the value of `dry_run` later on.
         description: 'Dry run (only report, do not modify)'
@@ -19,6 +19,8 @@ on:
         type: string
         default: 'true'
 
+# In the caller repo (JuliaLang/julia or the stdlib repo):
+#
 # on:
 #   workflow_dispatch:
 #     inputs:
