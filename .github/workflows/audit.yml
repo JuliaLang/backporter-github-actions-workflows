@@ -41,7 +41,7 @@ jobs:
   audit-backport-labels:
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write # # necessary to be able to remove labels from PRs
+      pull-requests: write # necessary to be able to remove labels from PRs
     steps:
       - name: Checkout Backporter
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
