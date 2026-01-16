@@ -1,0 +1,92 @@
+name: Backport Label Audit
+# Run this workflow manually to audit backport labels on pull requests
+# and remove labels from PRs that have already been backported.
+# Optionally specify a release version to limit the audit to that version
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Release version to audit (e.g., 1.13). Leave empty to audit all versions.'
+        required: false
+        type: string
+      dry_run:
+        # In the caller repo (JuliaLang/julia or the stdlib repo), this is a `choice`.
+        # But `choice` doesn't seem to be supported in reusable workflows, so we use `string` here.
+        # And then we manually validate the value of `dry_run` later on.
+        description: 'Dry run (only report, do not modify)'
+        required: true
+        type: string
+        default: 'true'
+
+# In the caller repo (JuliaLang/julia or the stdlib repo):
+#
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       version:
+#         description: 'Release version to audit (e.g., 1.13). Leave empty to audit all versions.'
+#         required: false
+#         type: string
+#       dry_run:
+#         description: 'Dry run (only report, do not modify)'
+#         required: true
+#         type: choice
+#         options:
+#           - 'true'
+#           - 'false'
+#         default: 'true'
+
+jobs:
+  audit-backport-labels:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout Backporter
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          repository: KristofferC/Backporter
+          # We specify a commit, instead of checking out the latest master
+          ref: ea93636e6dce51e0bde2f97dd47c27f6b5c94608
+          path: backporter
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@5c9647d97b78a5debe5164e9eec09d653d29bd71 # v2.6.1
+        with:
+          # Update this whenever a new version of Julia comes out
+          # Don't set it to '1', otherwise CI might randomly start breaking when a new Julia version comes out
+          # Always set it to at least major.minor
+          version: '1.12'
+
+      - name: Cache Julia packages
+        uses: julia-actions/cache@d10a6fd8f31b12404a54613ebad242900567f2b9 # v2.1.0
+        with:
+          cache-name: backporter
+
+      - name: Install dependencies
+        run: |
+          cd backporter
+          julia --project -e 'using Pkg; Pkg.instantiate()'
+
+      - name: Run backport label audit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUTS_VERSION: ${{ inputs.version }}
+          INPUTS_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          cd backporter
+          ARGS="--audit -r ${GITHUB_REPOSITORY:?}"
+          if [ -n "$INPUTS_VERSION" ]; then
+            ARGS="${ARGS:?} -v ${INPUTS_VERSION:?}"
+          fi
+          if [ "$INPUTS_DRY_RUN" = "true" ]; then
+            ARGS="${ARGS:?} --dry-run"
+          elif [ "$INPUTS_DRY_RUN" = "true" ]; then
+          else
+            # We have to do this manual validation here, because reusable workflows don't support `type: choice` for inputs.
+            echo "FATAL ERROR: Invalid value for the dry_run input: $INPUTS_DRY_RUN"
+            exit 1
+          fi
+          echo "ARGS is: ${ARGS:?}"
+          julia --project backporter.jl ${ARGS:?}

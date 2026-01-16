@@ -1,0 +1,85 @@
+name: Backport Label Cleanup
+# Runs automatically when a pull request to a release branch is merged
+# to remove backport labels from the merged PRs
+
+on:
+  workflow_call:
+    inputs:
+      pr_number:
+        description: 'The value of github.event.pull_request.number'
+        required: true
+        type: string
+      pr_base_ref:
+        description: 'The value of github.event.pull_request.base.ref'
+        required: true
+        type: string
+
+# In the caller repo (JuliaLang/julia or the stdlib repo):
+# on:
+#   pull_request:
+#     types: [closed]
+#     branches:
+#       - 'release-*'
+
+jobs:
+  remove-backport-labels:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Extract version from branch
+        id: extract
+        env:
+          BRANCH: ${{ inputs.pr_base_ref }}
+        run: |
+          if [[ "${BRANCH:?}" =~ ^release-([0-9]+\.[0-9]+)$ ]]; then
+            echo "version=${BASH_REMATCH[1]}" >> "${GITHUB_OUTPUT:?}"
+          else
+            echo "Branch ${BRANCH:?} does not match release-X.Y pattern"
+            exit 0
+          fi
+
+      - name: Checkout Backporter
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          repository: KristofferC/Backporter
+          # We specify a commit, instead of checking out the latest master
+          ref: ea93636e6dce51e0bde2f97dd47c27f6b5c94608
+          path: backporter
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@5c9647d97b78a5debe5164e9eec09d653d29bd71 # v2.6.1
+        with:
+          # Update this whenever a new version of Julia comes out
+          # Don't set it to '1', otherwise CI might randomly start breaking when a new Julia version comes out
+          # Always set it to at least major.minor
+          version: '1.12'
+
+      - name: Cache Julia packages
+        if: steps.extract.outputs.version != ''
+        uses: julia-actions/cache@d10a6fd8f31b12404a54613ebad242900567f2b9 # v2.1.0
+        with:
+          cache-name: backporter
+
+      - name: Install dependencies
+        if: steps.extract.outputs.version != ''
+        run: |
+          cd backporter
+          julia --project -e 'using Pkg; Pkg.instantiate()'
+
+      - name: Run backport label cleanup
+        if: steps.extract.outputs.version != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUTS_PR_NUMBER: ${{ inputs.pr_number }}
+          OUTPUTS_VERSION: ${{ steps.extract.outputs.version }}
+        run: |
+          cd backporter
+          echo "OUTPUTS_VERSION is: ${OUTPUTS_VERSION:?}"
+          echo "GITHUB_REPOSITORY is: ${GITHUB_REPOSITORY:?}"
+          echo "INPUTS_PR_NUMBER is: ${INPUTS_PR_NUMBER:?}"
+          julia --project backporter.jl --audit \
+            -v "${OUTPUTS_VERSION:?}" \
+            -r "${GITHUB_REPOSITORY:?}" \
+            --cleanup-pr "${INPUTS_PR_NUMBER:?}"
