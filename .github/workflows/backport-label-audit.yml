@@ -29,7 +29,8 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           repository: KristofferC/Backporter
-          ref: master
+          # We specify a commit, instead of checking out the latest master
+          ref: ea93636e6dce51e0bde2f97dd47c27f6b5c94608
           path: backporter
 
       - name: Setup Julia
