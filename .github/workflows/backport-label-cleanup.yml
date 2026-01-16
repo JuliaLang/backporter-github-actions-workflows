@@ -3,10 +3,23 @@ name: Backport Label Cleanup
 # to remove backport labels from the merged PRs
 
 on:
-  pull_request:
-    types: [closed]
-    branches:
-      - 'release-*'
+  workflow_call:
+    inputs:
+      pr_number:
+        description: 'The value of github.event.pull_request.number'
+        required: true
+        type: string
+      pr_base_ref:
+        description: 'The value of github.event.pull_request.base.ref'
+        required: true
+        type: string
+
+# In the caller repo (JuliaLang/julia or the stdlib repo):
+# on:
+#   pull_request:
+#     types: [closed]
+#     branches:
+#       - 'release-*'
 
 jobs:
   remove-backport-labels:
@@ -17,12 +30,13 @@ jobs:
     steps:
       - name: Extract version from branch
         id: extract
+        env:
+          BRANCH: ${{ inputs.pr_base_ref }}
         run: |
-          BRANCH="${{ github.event.pull_request.base.ref }}"
-          if [[ "$BRANCH" =~ ^release-([0-9]+\.[0-9]+)$ ]]; then
-            echo "version=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+          if [[ "${BRANCH:?}" =~ ^release-([0-9]+\.[0-9]+)$ ]]; then
+            echo "version=${BASH_REMATCH[1]}" >> "${GITHUB_OUTPUT:?}"
           else
-            echo "Branch $BRANCH does not match release-X.Y pattern"
+            echo "Branch ${BRANCH:?} does not match release-X.Y pattern"
             exit 0
           fi
 
@@ -58,9 +72,14 @@ jobs:
         if: steps.extract.outputs.version != ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUTS_PR_NUMBER: ${{ inputs.pr_number }}
+          OUTPUTS_VERSION: ${{ steps.extract.outputs.version }}
         run: |
           cd backporter
+          echo "OUTPUTS_VERSION is: ${OUTPUTS_VERSION:?}"
+          echo "GITHUB_REPOSITORY is: ${GITHUB_REPOSITORY:?}"
+          echo "INPUTS_PR_NUMBER is: ${INPUTS_PR_NUMBER:?}"
           julia --project backporter.jl --audit \
-            -v ${{ steps.extract.outputs.version }} \
-            -r ${{ github.repository }} \
-            --cleanup-pr ${{ github.event.pull_request.number }}
+            -v "${OUTPUTS_VERSION:?}" \
+            -r "${GITHUB_REPOSITORY:?}" \
+            --cleanup-pr "${INPUTS_PR_NUMBER:?}"
