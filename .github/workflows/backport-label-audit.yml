@@ -70,13 +70,16 @@ jobs:
       - name: Run backport label audit
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUTS_VERSION: ${{ inputs.version }}
+          INPUTS_DRY_RUN: ${{ inputs.dry_run }}
         run: |
           cd backporter
-          ARGS="--audit -r ${{ github.repository }}"
-          if [ -n "${{ inputs.version }}" ]; then
-            ARGS="$ARGS -v ${{ inputs.version }}"
+          ARGS="--audit -r ${GITHUB_REPOSITORY:?}"
+          if [ -n "$INPUTS_VERSION" ]; then
+            ARGS="${ARGS:?} -v ${INPUTS_VERSION:?}"
           fi
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            ARGS="$ARGS --dry-run"
+          if [ "${INPUTS_DRY_RUN:?}" = "true" ]; then
+            ARGS="${ARGS:?} --dry-run"
           fi
-          julia --project backporter.jl $ARGS
+          echo "ARGS is: ${ARGS:?}"
+          julia --project backporter.jl ${ARGS:?}
