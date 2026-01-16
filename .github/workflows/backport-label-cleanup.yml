@@ -28,7 +28,7 @@ jobs:
 
       - name: Checkout Backporter
         if: steps.extract.outputs.version != ''
-        uses: actions/checkout@v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           repository: KristofferC/Backporter
           ref: master
@@ -42,7 +42,7 @@ jobs:
 
       - name: Cache Julia packages
         if: steps.extract.outputs.version != ''
-        uses: julia-actions/cache@v2
+        uses: julia-actions/cache@d10a6fd8f31b12404a54613ebad242900567f2b9 # v2.1.0
         with:
           cache-name: backporter
 
