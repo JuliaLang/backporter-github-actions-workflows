@@ -1,4 +1,4 @@
-name: Backport Label Cleanup
+name: Cleanup
 # Runs automatically when a pull request to a release branch is merged
 # to remove backport labels from the merged PRs
 
@@ -26,7 +26,7 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
+      pull-requests: write # necessary to be able to remove labels from PRs
     steps:
       - name: Extract version from branch
         id: extract

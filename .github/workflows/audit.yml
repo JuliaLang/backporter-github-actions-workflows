@@ -1,4 +1,4 @@
-name: Backport Label Audit
+name: Audit
 # Run this workflow manually to audit backport labels on pull requests
 # and remove labels from PRs that have already been backported.
 # Optionally specify a release version to limit the audit to that version
@@ -41,7 +41,7 @@ jobs:
   audit-backport-labels:
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
+      pull-requests: write # necessary to be able to remove labels from PRs
     steps:
       - name: Checkout Backporter
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -83,6 +83,7 @@ jobs:
           if [ "$INPUTS_DRY_RUN" = "true" ]; then
             ARGS="${ARGS:?} --dry-run"
           elif [ "$INPUTS_DRY_RUN" = "true" ]; then
+            :
           else
             # We have to do this manual validation here, because reusable workflows don't support `type: choice` for inputs.
             echo "FATAL ERROR: Invalid value for the dry_run input: $INPUTS_DRY_RUN"
