@@ -82,7 +82,7 @@ jobs:
           fi
           if [ "$INPUTS_DRY_RUN" = "true" ]; then
             ARGS="${ARGS:?} --dry-run"
-          elif [ "$INPUTS_DRY_RUN" = "true" ]; then
+          elif [ "$INPUTS_DRY_RUN" = "false" ]; then
             :
           else
             # We have to do this manual validation here, because reusable workflows don't support `type: choice` for inputs.
