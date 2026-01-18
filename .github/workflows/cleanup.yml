@@ -47,6 +47,7 @@ jobs:
           # We specify a commit, instead of checking out the latest master
           ref: ea93636e6dce51e0bde2f97dd47c27f6b5c94608
           path: backporter
+          persist-credentials: false
 
       - name: Setup Julia
         uses: julia-actions/setup-julia@5c9647d97b78a5debe5164e9eec09d653d29bd71 # v2.6.1
