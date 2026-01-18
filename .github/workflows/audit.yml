@@ -43,14 +43,8 @@ jobs:
     permissions:
       pull-requests: write # necessary to be able to remove labels from PRs
     steps:
-      - name: Checkout Backporter
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-        with:
-          repository: KristofferC/Backporter
-          # We specify a commit, instead of checking out the latest master
-          ref: d2f907a55b2b6c434d53bc90130eacd6f4bd81bd
-          path: backporter
-          persist-credentials: false
+      - name: Pull KristofferC/Backporter via submodule
+        run: git submodule update --init -- backporter
 
       - name: Setup Julia
         uses: julia-actions/setup-julia@5c9647d97b78a5debe5164e9eec09d653d29bd71 # v2.6.1

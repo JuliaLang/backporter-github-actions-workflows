@@ -8,3 +8,10 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+  - package-ecosystem: "gitsubmodule" # This is how we keep KristofferC/Backporter up-to-date
+    directory: "/"
+    schedule:
+      interval: "daily"
+    labels:
+      - "dependencies"
+      - "git-submodule"
