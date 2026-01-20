@@ -45,7 +45,7 @@ jobs:
         with:
           repository: KristofferC/Backporter
           # We specify a commit, instead of checking out the latest master
-          ref: d2f907a55b2b6c434d53bc90130eacd6f4bd81bd
+          ref: 8731b186ab7db43d5303f5912991af0d5469b59c
           path: backporter
           persist-credentials: false
 
