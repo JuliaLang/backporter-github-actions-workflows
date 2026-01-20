@@ -13,6 +13,14 @@ on:
         description: 'The value of github.event.pull_request.base.ref'
         required: true
         type: string
+      dry_run:
+        # In the caller repo (JuliaLang/julia or the stdlib repo), this is a `choice`.
+        # But `choice` doesn't seem to be supported in reusable workflows, so we use `string` here.
+        # And then we manually validate the value of `dry_run` later on.
+        description: 'Dry run (only report, do not modify)'
+        required: true
+        type: string
+        default: 'true'
 
 # In the caller repo (JuliaLang/julia or the stdlib repo):
 # on:
@@ -77,10 +85,20 @@ jobs:
           OUTPUTS_VERSION: ${{ steps.extract.outputs.version }}
         run: |
           cd backporter
+          if [ "$INPUTS_DRY_RUN" = "true" ]; then
+            DRY_RUN_ARG="--dry-run"
+          elif [ "$INPUTS_DRY_RUN" = "false" ]; then
+            DRY_RUN_ARG=""
+          else
+            # We have to do this manual validation here, because reusable workflows don't support `type: choice` for inputs.
+            echo "FATAL ERROR: Invalid value for the dry_run input: $INPUTS_DRY_RUN"
+            exit 1
+          fi
+          echo "DRY_RUN_ARG is: $DRY_RUN_ARG"
           echo "OUTPUTS_VERSION is: ${OUTPUTS_VERSION:?}"
           echo "GITHUB_REPOSITORY is: ${GITHUB_REPOSITORY:?}"
           echo "INPUTS_PR_NUMBER is: ${INPUTS_PR_NUMBER:?}"
-          julia --project backporter.jl --audit \
+          julia --project backporter.jl --cleanup $DRY_RUN_ARG \
             -v "${OUTPUTS_VERSION:?}" \
             -r "${GITHUB_REPOSITORY:?}" \
             --cleanup-pr "${INPUTS_PR_NUMBER:?}"
