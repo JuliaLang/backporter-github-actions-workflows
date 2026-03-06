@@ -50,7 +50,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Julia
-        uses: julia-actions/setup-julia@5c9647d97b78a5debe5164e9eec09d653d29bd71 # v2.6.1
+        uses: julia-actions/setup-julia@4c0cb0fce8556fdb04a90347310e5db8b1f98fb9 # v2.7.0
         with:
           # Update this whenever a new version of Julia comes out
           # Don't set it to '1', otherwise CI might randomly start breaking when a new Julia version comes out
